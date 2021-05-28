@@ -17,9 +17,9 @@
 
     1. java -jar s3utility.jar /s3/upload/
 
-    2. Drop file 1621679461-upload sample file to /s3/upload/
+    2. Drop sample input file 1621679461-upload sample file to /s3/upload/
 
-    3. Make sure contents of 1621679461-upload sample file exists on local file
+    3. Make sure contents of 1621679461-upload sample file exists on local file system
 
     4. Upload process will start
 
