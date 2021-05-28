@@ -1,0 +1,4 @@
+bucket,keyfile,acl,localfilepath
+bucket,keyfile,acl,localfilepath
+telenor-se-aep-sat-adobe-analytics,folder/input2.csv,Private,C:/encrypt/input2.csv
+telenor-se-aep-sat-adobe-analytics,folder/input1.csv,Private,C:/encrypt/input1.csv
