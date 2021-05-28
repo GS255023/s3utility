@@ -28,3 +28,7 @@
     6. Upload process will be paused
 
     7. If you want to resume upload process drop the newly file created in  /s3/upload/resume/ to /s3/upload/
+    
+## Main Class
+    
+    -> aws.example.s3.WatchDir
