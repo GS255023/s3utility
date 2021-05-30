@@ -31,6 +31,7 @@ public class WatchDir {
     private static Upload uploadPointer;
     private static Download downloadPointer;
     private HashMap<String, Upload> uploads = new HashMap<String, Upload>();
+    private HashMap<String, Download> downloads = new HashMap<String, Download>();
     private List<PutObjectRequest> putobjectList = new ArrayList<PutObjectRequest>();
     private List<GetObjectRequest> getobjectList = new ArrayList<GetObjectRequest>();
     private CountDownLatch doneSignal;
@@ -285,7 +286,76 @@ public class WatchDir {
                         GetObjectRequest object = new GetObjectRequest(bucketName, keyfile);
                         getobjectList.add(object);
                         downloadPointer = s3utility.downloadFilesWithListener(object, new File(localFilePath), doneSignal, filePath);
-                        //uploads.put(bucketName + "/" + keyfile, uploadPointer);
+                        downloads.put(bucketName + "/" + keyfile, downloadPointer);
+                    }
+                }
+                else if (event.kind().name() == "ENTRY_CREATE" && fileName.contains("pausedownload")) {
+                    System.out.format("\n%s: %s\n", event.kind().name(), filePath);
+                    // System.out.format("%s: \n", doneSignal.getCount());
+                    Thread.sleep(5000);
+                    List<List<String>> records = new ArrayList<>();
+
+                    try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+                        String line;
+                        String PIPE_DELIMITER = ",";
+                        int header = 0;
+                        while ((line = br.readLine()) != null) {
+                            String[] values = line.split(PIPE_DELIMITER, 5);
+                            if (header > 0)
+                                records.add(Arrays.asList(values));
+                            header++;
+                        }
+                    }
+
+                    for (List l1 : records) {
+                        String bucketName = l1.get(0).toString();
+                        String keyfile = l1.get(1).toString();
+                        String acl = l1.get(2).toString();
+                        String localFilePath = l1.get(3).toString();
+
+                        //System.out.format("%s: %s\n", event.kind().name(), child.toString().replace('\\', '/'));
+                        Download g = downloads.get(bucketName + "/" + keyfile);
+                        PersistableDownload persistableDownload = g.pause();
+
+                        // Create a new file to store the information.
+                        File f = new File(dir.toString().replace('\\', '/') + "/resume/" + getepochTime().toString() + "resumedownload");
+                        if (!f.exists()) f.createNewFile();
+                        FileOutputStream fos = new FileOutputStream(f);
+
+                        // Serialize the persistable download to a file.
+                        persistableDownload.serialize(fos);
+                        fos.close();
+                    }
+                }else if (event.kind().name() == "ENTRY_CREATE" && fileName.contains("resumedownload")) {
+
+                    System.out.format("\n%s: %s\n", event.kind().name(), filePath);
+                    Thread.sleep(5000);
+
+                    try (FileInputStream fis = new FileInputStream(new File(filePath))) {
+
+                        // Deserialize PersistableUpload information from disk.
+                        PersistableDownload persistDownload = PersistableTransfer.deserializeFrom(fis);
+
+                        JSONParser parser = new JSONParser();
+                        try {
+                            Object obj = parser.parse(new FileReader(filePath));
+
+                            // A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
+                            JSONObject jsonObject = (JSONObject) obj;
+                            String bucketName = jsonObject.get("bucketName").toString();
+                            String keyfile = jsonObject.get("key").toString();
+                            String localFilePath = jsonObject.get("file").toString();
+
+                            PutObjectRequest object = new PutObjectRequest(bucketName, keyfile,
+                                    new File(localFilePath)).withCannedAcl(CannedAccessControlList.Private);
+
+                            doneSignal = new CountDownLatch(1);
+                            s3utility.resumeDownload(persistDownload, object, doneSignal, filePath);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        fis.close();
                     }
                 }
 

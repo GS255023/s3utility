@@ -49,6 +49,31 @@ public class s3utility {
         }
     }
 
+    public static void resumeDownload(PersistableDownload persistableDownload, PutObjectRequest object  ,CountDownLatch doneSignal,String ResumeCommandFilePath) throws Exception {
+        try {
+            BasicSessionCredentials sessionCredentials = new BasicSessionCredentials(
+                    awsAccessKey1, awsSecretKey1,
+                    sessionToken1);
+            String region = region1;
+
+            s3Client = AmazonS3ClientBuilder.standard()
+                    .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials))
+                    .withRegion(region)
+                    .build();
+            TransferManagerBuilder transferManagerBuilder = TransferManagerBuilder.standard().withS3Client(s3Client);
+            transferManagerBuilder.setShutDownThreadPools(false);
+            TransferManager xfer_mgr = transferManagerBuilder.build();
+
+            progressListener listner = new progressListener(object.getFile(), object.getBucketName() + "/" + object.getKey(), doneSignal, ResumeCommandFilePath);
+            Download d = xfer_mgr.resumeDownload(persistableDownload);
+            d.addProgressListener(listner);
+            listner.setDownloadPointer_transferManager(d, xfer_mgr);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+    }
+
     public static Upload uploadFilesWithListener(PutObjectRequest object,CountDownLatch doneSignal,String UploadCommandFilePath) throws Exception {
         try {
             BasicSessionCredentials sessionCredentials = new BasicSessionCredentials(

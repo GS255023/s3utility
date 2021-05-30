@@ -1,0 +1,3 @@
+bucket,keyfile,acl,localfilepath
+telenor-se-aep-sat-adobe-analytics,folder/sqldev.zip,Private,C:/encrypt/sqldev.zip
+telenor-se-aep-sat-adobe-analytics,folder/input1.csv,Private,C:/encrypt/input1.csv
