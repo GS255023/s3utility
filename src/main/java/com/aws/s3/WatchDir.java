@@ -318,7 +318,7 @@ public class WatchDir {
                         PersistableDownload persistableDownload = g.pause();
 
                         // Create a new file to store the information.
-                        File f = new File(dir.toString().replace('\\', '/') + "/resume/" + getepochTime().toString() + "resumedownload");
+                        File f = new File(dir.toString().replace('\\', '/') + "/resume/" + getepochTime().toString() + "-resumedownload");
                         if (!f.exists()) f.createNewFile();
                         FileOutputStream fos = new FileOutputStream(f);
 
